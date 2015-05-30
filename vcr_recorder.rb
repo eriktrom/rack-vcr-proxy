@@ -9,7 +9,7 @@ require_relative 'proxy_builder'
 proxy_builder = ProxyBuilder.new
 
 VCR.configure do |c|
-  c.cassette_library_dir = ENV['CASSETTES']
+  c.cassette_library_dir = proxy_builder.cassette_library_dir
   c.hook_into :webmock
   c.debug_logger = File.new("#{ENV['CASSETTES']}/vcr-recorder-debug.log", 'a+')
 

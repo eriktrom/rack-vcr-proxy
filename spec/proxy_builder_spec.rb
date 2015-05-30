@@ -15,6 +15,15 @@ RSpec.describe ProxyBuilder do
       expect(subject.port).to eq 80
     end
 
+    it 'should set cassette library directory to cassettes by default' do
+      expect(subject.cassette_library_dir).to eq 'cassettes'
+    end
+
+    it 'should set cassette library directory to cassettes by default' do
+      subject = ProxyBuilder.new host: 'example.com', cassette_library_dir: 'blah'
+      expect(subject.cassette_library_dir).to eq 'blah'
+    end
+
     it 'with custom port' do
       subject = ProxyBuilder.new(host: 'example.com', port: 8000)
       expect(subject.port).to eq 8000

@@ -3,13 +3,14 @@ require "rack"
 require 'pry'
 
 class ProxyBuilder
-  attr_accessor :scheme, :host, :port, :path, :query, :cassette_type
+  attr_accessor :scheme, :host, :port, :path, :query, :cassette_type, :cassette_library_dir
 
-  def initialize host: nil, port: ENV['PORT'] || 80, scheme: ENV['SCHEME'] || 'https', cassette_type: 'normal'
+  def initialize host: nil, port: ENV['PORT'] || 80, scheme: ENV['SCHEME'] || 'https', cassette_type: 'normal', cassette_library_dir: ENV['CASSETTES'] || 'cassettes'
     @host = host || ENV['HOST'] || (raise 'Must provide a host via HOST env variable')
     @scheme = scheme
     @port = port
     @cassette_type = cassette_type
+    @cassette_library_dir = cassette_library_dir
   end
 
   def endpoint
