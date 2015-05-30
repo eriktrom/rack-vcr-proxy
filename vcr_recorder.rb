@@ -1,14 +1,17 @@
+require 'dotenv'
+Dotenv.load
+
 require 'rack'
 require 'vcr'
 require 'rack/reverse_proxy'
 require_relative 'proxy_builder'
 
-proxy_builder = ProxyBuilder.new(host: 'slack.com')
+proxy_builder = ProxyBuilder.new(host: ENV['HOST'])
 
 VCR.configure do |c|
-  c.cassette_library_dir = 'cassettes'
+  c.cassette_library_dir = ENV['CASSETTES']
   c.hook_into :webmock
-  c.debug_logger = File.new("vcr-recorder-debug.log", 'a+')
+  c.debug_logger = File.new("#{ENV['CASSETTES']}/vcr-recorder-debug.log", 'a+')
 
   c.default_cassette_options = { :update_content_length_header => true }
 

@@ -16,3 +16,5 @@ gem "pry-doc"
 
 gem "rspec", "~> 3.1"
 gem "guard-rspec", "~> 4.3"
+
+gem 'dotenv'
