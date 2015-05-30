@@ -1,0 +1,3 @@
+--color
+--format doc
+--require support/spec_helper
