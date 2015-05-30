@@ -6,7 +6,7 @@ require 'vcr'
 require 'rack/reverse_proxy'
 require_relative 'proxy_builder'
 
-proxy_builder = ProxyBuilder.new(host: ENV['HOST'])
+proxy_builder = ProxyBuilder.new
 
 VCR.configure do |c|
   c.cassette_library_dir = ENV['CASSETTES']

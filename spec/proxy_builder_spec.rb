@@ -4,15 +4,15 @@ RSpec.describe ProxyBuilder do
 
   describe 'required args' do
     it 'requires a host' do
-      expect { ProxyBuilder.new }.to raise_error('missing keyword: host')
+      expect { ProxyBuilder.new }.to raise_error('Must provide a host via HOST env variable')
     end
   end
 
-  describe 'A new proxy builder' do
-    subject { ProxyBuilder.new host: 'example.com' }
+  describe 'A new normal proxy builder' do
+    subject { ProxyBuilder.new host: 'example.com'}
 
     it 'port 80 by default' do
-      expect(subject.port).to eq ''
+      expect(subject.port).to eq 80
     end
 
     it 'with custom port' do
@@ -30,7 +30,22 @@ RSpec.describe ProxyBuilder do
       end
     end
 
-    describe 'cassette_name' do
+    context 'for normal path based cassette names' do
+      it 'should not error when no query string' do
+        env = {
+          'REQUEST_PATH' => '/api/channels.history',
+          'QUERY_STRING' => ''
+        }
+
+        expect(subject.cassette_name(env)).to eq "/api/channels.history"
+      end
+    end
+  end
+
+  describe 'A new proxy builder for slack' do
+    subject { ProxyBuilder.new host: 'example.com', cassette_type: 'slack'}
+
+    describe '#cassette_name' do
       it 'should be the rpc method + the channel name' do
         env = {
           'REQUEST_PATH' => '/api/channels.history',
@@ -47,12 +62,9 @@ RSpec.describe ProxyBuilder do
           'QUERY_STRING' => ''
         }
 
+        expect(subject.cassette_name(env)).to eq "channels.history-"
         expect{ subject.cassette_name(env) }.not_to raise_error
       end
     end
-
   end
-
-
-
 end

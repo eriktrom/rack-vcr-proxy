@@ -3,16 +3,18 @@ require "rack"
 require 'pry'
 
 class ProxyBuilder
-  attr_accessor :scheme, :host, :port, :path, :query
+  attr_accessor :scheme, :host, :port, :path, :query, :cassette_type
 
-  def initialize host:, scheme: 'https', port: 80
-    @host = host
+  def initialize host: nil, port: ENV['PORT'] || 80, scheme: ENV['SCHEME'] || 'https', cassette_type: 'normal'
+    @host = host || ENV['HOST'] || (raise 'Must provide a host via HOST env variable')
     @scheme = scheme
-    @port = port == 80 ? '' : port
+    @port = port
+    @cassette_type = cassette_type
   end
 
   def endpoint
-    scheme + '://' + host + '/*'
+    suffix = port == 80 ? "/*" : ":#{port}/*"
+    "#{scheme}://#{host}#{suffix}"
   end
 
   def cassette_name env
@@ -20,7 +22,11 @@ class ProxyBuilder
       .parse_query(env.fetch('QUERY_STRING'))
       .fetch('channel') { '' }
 
-    type = env.fetch('REQUEST_PATH').split('/').last
-    type+'-'+channel
+    if cassette_type == 'slack'
+      type = env.fetch('REQUEST_PATH').split('/').last
+      type+'-'+channel
+    elsif cassette_type == 'normal'
+      env.fetch('REQUEST_PATH')
+    end
   end
 end
