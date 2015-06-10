@@ -1,33 +1,52 @@
+require 'dotenv'
+Dotenv.load
+
 require "rack"
 
 require 'pry'
 
 class ProxyBuilder
-  attr_accessor :scheme, :host, :port, :path, :query, :cassette_type, :cassette_library_dir
+  attr_accessor :scheme, :host, :port, :path, :query,
+                :cassette_library_dir, :proxy_port, :env
 
-  def initialize host: nil, port: ENV['PORT'] || 80, scheme: ENV['SCHEME'] || 'https', cassette_type: 'normal', cassette_library_dir: ENV['CASSETTES'] || 'cassettes'
+  # TODO: only require host, not port and scheme - split host string if needed instead
+  def initialize host: nil,
+                 port: ENV['PORT'] || '80',
+                 proxy_port: ENV['PROXY_PORT'] || 9001,
+                 scheme: ENV['SCHEME'] || 'https',
+                 cassette_library_dir: ENV['CASSETTES'] || 'cassettes'
+
     @host = host || ENV['HOST'] || (raise 'Must provide a host via HOST env variable')
     @scheme = scheme
     @port = port
-    @cassette_type = cassette_type
     @cassette_library_dir = cassette_library_dir
+    @proxy_port = proxy_port
   end
 
   def endpoint
-    suffix = port == 80 ? "/*" : ":#{port}/*"
+    suffix = port == '80' ? "/*" : ":#{port}/*"
     "#{scheme}://#{host}#{suffix}"
   end
 
-  def cassette_name env
-    channel = Rack::Utils
-      .parse_query(env.fetch('QUERY_STRING'))
-      .fetch('channel') { '' }
+  def method
+    env.fetch('REQUEST_METHOD')
+  end
 
-    if cassette_type == 'slack'
-      type = env.fetch('REQUEST_PATH').split('/').last
-      type+'-'+channel
-    elsif cassette_type == 'normal'
-      env.fetch('REQUEST_PATH')
-    end
+  def query_path
+    querys = Rack::Utils.parse_query(env.fetch('QUERY_STRING'))
+    return '' if querys.empty?
+
+    querys.each.with_object(['/query']) { |(key, val), result|
+      result << "/#{key}-is-#{val}"
+    }.join()
+  end
+
+  def path
+    env.fetch('REQUEST_PATH')
+  end
+
+  def cassette_name env
+      @env = env
+      "#{path}/#{method}#{query_path}"
   end
 end
