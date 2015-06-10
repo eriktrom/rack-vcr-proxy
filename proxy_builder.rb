@@ -33,10 +33,11 @@ class ProxyBuilder
   end
 
   def query_path
-    querys = Rack::Utils.parse_query(env.fetch('QUERY_STRING'))
-    return '' if querys.empty?
+    query_string = env.fetch('QUERY_STRING')
+    return '' if query_string.empty?
 
-    querys.each.with_object(['/query']) { |(key, val), result|
+    query_hash = Rack::Utils.parse_query(query_string)
+    query_hash.each.with_object(['/query']) { |(key, val), result|
       result << "/#{key}-is-#{val}"
     }.join()
   end

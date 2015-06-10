@@ -97,6 +97,16 @@ RSpec.describe ProxyBuilder do
 
         expect(subject.cassette_name(env)).to eq "api/channels.history/GET/query/something-is-foo/best-language-is-ruby"
       end
+
+      it 'handles ' do
+        env = {
+          'REQUEST_METHOD' => 'GET',
+          'REQUEST_PATH' => 'api/channels.history',
+          'QUERY_STRING' => ''
+        }
+
+        expect(subject.cassette_name(env)).to eq "api/channels.history/GET"
+      end
     end
   end
 end

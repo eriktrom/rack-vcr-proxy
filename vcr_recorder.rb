@@ -13,7 +13,10 @@ VCR.configure do |c|
   c.hook_into :webmock
   c.debug_logger = File.new("#{ENV['CASSETTES']}/vcr-recorder-debug.log", 'a+')
 
-  c.default_cassette_options = { :update_content_length_header => true }
+  c.default_cassette_options = {
+    :update_content_length_header => true,
+    :match_requests_on => [:method, :host, :query]
+  }
 
   c.before_record do |i|
     # pretty print request and response json body's
