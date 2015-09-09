@@ -16,7 +16,7 @@ rspec_opts = {
 guard :rspec, rspec_opts do
   watch(%r{^spec/.+_spec\.rb$})
   watch(%r{^lib/(.+)\.rb$})                     { |m| "spec/#{m[1]}_spec.rb" }
-  watch('vcr_recorder.rb')                      { |m| 'spec' }
+  watch('vcr_recorder.rb')                      { 'spec' }
 
   watch('spec/support/spec_helper.rb')          { 'spec' }
   watch('spec/support/spec_helper_run_all.rb')  { 'spec' }

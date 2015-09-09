@@ -2,12 +2,17 @@ require_relative '../lib/proxy_builder'
 
 RSpec.describe ProxyBuilder do
 
+  ProxyBuilder.class_eval do
+    public :query_path, :path
+  end
+
   before do
     ENV['HOST'] = 'example.com'
     ENV['PORT'] = '80'
     ENV['PROXY_PORT'] = '9001'
     ENV['SCHEME'] = 'https'
     ENV['CASSETTES'] = 'cassettes'
+    ENV['PRESERVE_EXACT_BODY_BYTES'] = 'false'
   end
 
   describe 'required args' do
@@ -130,6 +135,37 @@ RSpec.describe ProxyBuilder do
         }
 
         expect(subject.cassette_name(env)).to eq "api/channels.history/GET"
+      end
+    end
+
+    context '#preserve_exact_body_bytes' do
+      it 'with preserve_exact_body_bytes' do
+        subject.preserve_exact_body_bytes = 'true'
+        expect(subject.preserve_exact_body_bytes).to eq true
+      end
+
+      it 'with preserve_exact_body_bytes' do
+        subject.preserve_exact_body_bytes = true
+        expect(subject.preserve_exact_body_bytes).to eq true
+      end
+
+      it 'should have an empty hash of options by default' do
+        subject.preserve_exact_body_bytes = :false
+        expect(subject.preserve_exact_body_bytes).to eq false
+      end
+
+      it 'should have an empty hash of options by default' do
+        subject.preserve_exact_body_bytes = "false"
+        expect(subject.preserve_exact_body_bytes).to eq false
+      end
+
+      it 'should have an empty hash of options by default' do
+        expect(subject.preserve_exact_body_bytes).to eq false
+      end
+
+      it 'should coerce nil to false' do
+        subject.preserve_exact_body_bytes = nil
+        expect(subject.preserve_exact_body_bytes).to eq false
       end
     end
   end

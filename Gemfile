@@ -1,5 +1,4 @@
-# A sample Gemfile
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
 gem 'growl'
 gem 'guard'
@@ -12,9 +11,9 @@ gem 'webmock'
 gem 'rack'
 
 gem 'pry'
-gem "pry-doc"
+gem 'pry-doc'
 
-gem "rspec", "~> 3.1"
-gem "guard-rspec", "~> 4.3"
+gem 'rspec', '~> 3.1'
+gem 'guard-rspec', '~> 4.3'
 
 gem 'dotenv'

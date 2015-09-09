@@ -19,7 +19,12 @@ VCR.configure do |c|
     :match_requests_on => [:method, :host, :query]
   }
 
+  if proxy_builder.preserve_exact_body_bytes
+    c.default_cassette_options.preserve_exact_body_bytes = true
+  end
+
   c.before_record do |i|
+
     # pretty print request and response json body's
     type = Array(i.response.headers['Content-Type']).join(',').split(';').first
     code = i.response.status.code
