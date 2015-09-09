@@ -4,7 +4,8 @@ Dotenv.load
 require 'rack'
 require 'vcr'
 require 'rack/reverse_proxy'
-require_relative 'proxy_builder'
+require 'json'
+require_relative 'lib/proxy_builder'
 
 proxy_builder = ProxyBuilder.new
 
@@ -23,36 +24,63 @@ VCR.configure do |c|
     type = Array(i.response.headers['Content-Type']).join(',').split(';').first
     code = i.response.status.code
 
-    if type =~ /[\/+]json$/ or 'text/javascript' == type
+    if type == ('application/json' || 'text/javascript')
+      # pretty generate request body
+      if i.request.body.length > 0
+        begin
+          if i.request.body.is_a?(String)
+            request_body = JSON.parse i.request.body
+          else
+            request_body = i.request.body
+          end
+        rescue
+          if code != 404
+            puts
+            warn "VCR: JSON REQUEST parse error for Content-type #{type}"
+            warn "Your unparseable REQUEST json is: " + i.request.body.inspect
+            puts
+          end
+        else
+          i.request.body = JSON.pretty_generate request_body
+        end
+      end
+
+      # pretty generate response body
       begin
-        request_body = JSON.parse i.request.body
-        response_body = JSON.parse i.response.body
+        if i.response.body.is_a?(String)
+          response_body = JSON.parse i.response.body
+        else
+          response_body = i.response.body
+        end
       rescue
         if code != 404
           puts
-          warn "VCR: JSON parse error for Content-type #{type}"
-          warn "Your unparseable json is: " + i.response.body.inspect
+          warn "VCR: JSON RESPONSE parse error for Content-type #{type}"
+          warn "Your unparseable RESPONSE json is: " + i.response.body.inspect
+          warn "Your unparseable raw RESPONSE json is: " + i.response.body
           puts
         end
       else
-        i.request.body = JSON.pretty_generate request_body
         i.response.body = JSON.pretty_generate response_body
       end
     end
 
     # otherwise Ruby 2.0 will default to UTF-8:
-    i.response.body.force_encoding('US-ASCII')
+    # i.response.body.force_encoding('US-ASCII')
+    i.response.body.force_encoding('UTF-8')
   end
 end
 
 builder = Rack::Builder.new do
   use Rack::CommonLogger
   use Rack::ShowExceptions
+
   use VCR::Middleware::Rack do |cassette, env|
     cassette.name proxy_builder.cassette_name(env)
-    use Rack::ReverseProxy do |env|
-      reverse_proxy '/*', proxy_builder.endpoint
-    end
+  end
+
+  use Rack::ReverseProxy do |env|
+    reverse_proxy '/*', proxy_builder.endpoint
   end
 
   run Proc.new {|env| [200, {}]}
