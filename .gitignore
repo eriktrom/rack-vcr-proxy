@@ -1,3 +1,4 @@
 .env
-cassettes
+*cassettes*
 vcr-recorder-debug.log
+bin

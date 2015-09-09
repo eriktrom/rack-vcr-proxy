@@ -28,6 +28,10 @@ RSpec.describe ProxyBuilder do
       expect(subject.proxy_port).to eq '9001'
     end
 
+    it 'should have a proxy port of 9001 by default' do
+      expect(subject.proxy_port).to eq '9001'
+    end
+
     it 'should set cassette library directory to cassettes by default' do
       expect(subject.cassette_library_dir).to eq 'cassettes'
     end
@@ -54,6 +58,26 @@ RSpec.describe ProxyBuilder do
       it 'should correctly build the right url to forward to' do
         subject = ProxyBuilder.new host: 'blah.com', port: 8000
         expect(subject.endpoint).to eq 'https://blah.com:8000/*'
+      end
+
+      it 'should proxy a certain path when the reverse_proxy_path is provided' do
+        subject = ProxyBuilder.new host: 'blah.com', port: 8000, reverse_proxy_path: '/images/*'
+        expect(subject.endpoint).to eq 'https://blah.com:8000/images/*'
+      end
+
+      it 'path.resolve reverse_proxy_path to make this test not run 8000images together' do
+        subject = ProxyBuilder.new host: 'blah.com', port: 8000, reverse_proxy_path: 'images/*'
+        expect(subject.endpoint).to eq 'https://blah.com:8000/images/*'
+      end
+
+      it 'path.resolve reverse_proxy_path to make this test not run 8000images together' do
+        subject = ProxyBuilder.new host: 'blah.com', reverse_proxy_path: 'images/*'
+        expect(subject.endpoint).to eq 'https://blah.com/images/*'
+      end
+
+      it 'will put the * on the end if its not present' do
+        subject = ProxyBuilder.new host: 'blah.com', reverse_proxy_path: 'images'
+        expect(subject.endpoint).to eq 'https://blah.com/images/*'
       end
     end
 

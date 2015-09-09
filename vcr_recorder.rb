@@ -80,7 +80,7 @@ builder = Rack::Builder.new do
   end
 
   use Rack::ReverseProxy do |env|
-    reverse_proxy '/*', proxy_builder.endpoint
+    reverse_proxy proxy_builder.reverse_proxy_path, proxy_builder.endpoint
   end
 
   run Proc.new {|env| [200, {}]}
