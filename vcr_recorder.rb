@@ -66,13 +66,6 @@ VCR.configure do |c|
         i.response.body = JSON.pretty_generate response_body
       end
     end
-
-    # otherwise Ruby 2.0 will default to UTF-8:
-    if proxy_builder.preserve_exact_body_bytes == "true"
-      i.response.body.force_encoding('US-ASCII')
-    else
-      i.response.body.force_encoding('UTF-8')
-    end
   end
 end
 
@@ -91,4 +84,4 @@ builder = Rack::Builder.new do
   run Proc.new {|env| [200, {}]}
 end
 
-Rack::Server.start :app => builder, :Port => proxy_builder.proxy_port if __FILE__ == $0
+Rack::Server.start :app => builder, :port => proxy_builder.proxy_port if __FILE__ == $0

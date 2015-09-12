@@ -12,7 +12,6 @@ RSpec.describe ProxyBuilder do
     ENV['PROXY_PORT'] = '9001'
     ENV['SCHEME'] = 'https'
     ENV['CASSETTES'] = 'cassettes'
-    ENV['PRESERVE_EXACT_BODY_BYTES'] = 'false'
   end
 
   describe 'required args' do
@@ -140,12 +139,12 @@ RSpec.describe ProxyBuilder do
 
     context '#preserve_exact_body_bytes' do
       it 'with preserve_exact_body_bytes true' do
-        subject.preserve_exact_body_bytes = 'true'
-        expect(subject.preserve_exact_body_bytes).to eq 'true'
+        subject.preserve_exact_body_bytes = true
+        expect(subject.preserve_exact_body_bytes).to eq true
       end
 
       it 'should have an empty hash of options by default' do
-        expect(subject.preserve_exact_body_bytes).to eq 'false'
+        expect(subject.preserve_exact_body_bytes).to eq false
       end
     end
   end
