@@ -6,9 +6,10 @@ require 'pry'
 
 class ProxyBuilder
   attr_accessor :scheme, :host, :port, :path, :query,
-                :cassette_library_dir, :proxy_port, :env
+                :cassette_library_dir, :proxy_port, :env,
+                :preserve_exact_body_bytes
 
-  attr_writer :preserve_exact_body_bytes, :reverse_proxy_path
+  attr_writer :reverse_proxy_path
 
   def initialize host: nil,
                  port: ENV['PORT'] || '80',
@@ -16,8 +17,7 @@ class ProxyBuilder
                  scheme: ENV['SCHEME'] || 'https',
                  cassette_library_dir: ENV['CASSETTES'] || 'cassettes',
                  reverse_proxy_path: ENV['REVERSE_PROXY_PATH'] || '/*',
-                 preserve_exact_body_bytes: ENV['PRESERVE_EXACT_BODY_BYTES'] || false
-
+                 preserve_exact_body_bytes: ENV.fetch('PRESERVE_EXACT_BODY_BYTES', false)
     @host = host || ENV['HOST'] || (raise 'Must provide a host via HOST env variable')
     @scheme = scheme
     @port = port
@@ -55,17 +55,6 @@ class ProxyBuilder
     star_suffix = /(\*)/.match(@reverse_proxy_path).nil? ? '/*' : ''
     "#{splitter}#{@reverse_proxy_path}#{star_suffix}"
   end
-
-  # @see [http://www.relishapp.com/vcr/vcr/v/2-9-3/docs/configuration/preserve-exact-body-bytes]
-  # for the underlying VCR setting that this controls.
-  #
-  # @return [Boolean]
-  def preserve_exact_body_bytes
-    s = @preserve_exact_body_bytes
-    return true if !s.nil? && s != "false" && s != false && s != :false
-    return false
-  end
-
 
   private
 
