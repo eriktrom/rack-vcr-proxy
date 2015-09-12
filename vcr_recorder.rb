@@ -16,12 +16,9 @@ VCR.configure do |c|
 
   c.default_cassette_options = {
     :update_content_length_header => true,
-    :match_requests_on => [:method, :host, :query]
+    :match_requests_on => [:method, :host, :query],
+    :preserve_exact_body_bytes => proxy_builder.preserve_exact_body_bytes
   }
-
-  if proxy_builder.preserve_exact_body_bytes == "true"
-    c.default_cassette_options[:preserve_exact_body_bytes] = true
-  end
 
   c.before_record do |i|
 
