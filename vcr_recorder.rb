@@ -84,4 +84,4 @@ builder = Rack::Builder.new do
   run Proc.new {|env| [200, {}]}
 end
 
-Rack::Server.start :app => builder, :port => proxy_builder.proxy_port if __FILE__ == $0
+Rack::Server.start :app => builder, :Port => proxy_builder.proxy_port if __FILE__ == $0
