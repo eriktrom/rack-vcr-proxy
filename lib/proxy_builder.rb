@@ -7,9 +7,15 @@ require 'pry'
 class ProxyBuilder
   attr_accessor :scheme, :host, :port, :path, :query,
                 :cassette_library_dir, :proxy_port, :env,
-                :preserve_exact_body_bytes
+                :preserve_exact_body_bytes, :ignore_localhost
 
   attr_writer :reverse_proxy_path
+
+  def env_to_bool env_var
+    return false  if env_var == 0 || env_var.nil? || env_var.empty? || env_var =~ (/(false|f|no|n|0)$/i)
+    return true   if env_var =~ (/(true|t|yes|y|1)$/i)
+    raise ArgumentError.new("invalid value for ENV variable: \"#{env_var}\"")
+  end
 
   def initialize host: nil,
                  port: ENV['PORT'] || '80',
@@ -17,7 +23,9 @@ class ProxyBuilder
                  scheme: ENV['SCHEME'] || 'https',
                  cassette_library_dir: ENV['CASSETTES'] || 'cassettes',
                  reverse_proxy_path: ENV['REVERSE_PROXY_PATH'] || '/*',
-                 preserve_exact_body_bytes: ENV.fetch('PRESERVE_EXACT_BODY_BYTES', false)
+                 preserve_exact_body_bytes: env_to_bool(ENV['PRESERVE_EXACT_BODY_BYTES']),
+                 ignore_localhost: env_to_bool(ENV['SHOULD_RACK_VCR_PROXY_IGNORE_LOCALHOST'])
+
     @host = host || ENV['HOST'] || (raise 'Must provide a host via HOST env variable')
     @scheme = scheme
     @port = port
@@ -25,6 +33,7 @@ class ProxyBuilder
     @proxy_port = proxy_port
     @reverse_proxy_path = reverse_proxy_path
     @preserve_exact_body_bytes = preserve_exact_body_bytes
+    @ignore_localhost = ignore_localhost
   end
 
 
@@ -78,12 +87,14 @@ class ProxyBuilder
     # Your cassette will live in the following directory tree:
     #
     #   > /casseettes
-    #     > /love
-    #       > /dogs
-    #         > /GET
-    #           > /type-is-black
-    #             > /breed-is-mutt
-    #               > /name-is-tobi.yml   <-- your cassette file for this request
+    #     > /example.com
+    #      > /love
+    #        > /dogs
+    #          > /GET
+    #            > /query
+    #              > /type-is-black
+    #                > /breed-is-mutt
+    #                  > /name-is-tobi.yml   <-- your cassette file for this request
     #
     # @return [String] File directory path to a cassette file
     def query_path

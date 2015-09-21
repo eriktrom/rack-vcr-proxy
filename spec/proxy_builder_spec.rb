@@ -137,14 +137,115 @@ RSpec.describe ProxyBuilder do
       end
     end
 
+    # A bit confusing but went this direction b/c the tests need some love and
+    # without love, they we're actually lying to me (albeit for good reason, I
+    # was neglecting them)
+    #
+    # ENV['HOST'] is the only required
     context '#preserve_exact_body_bytes' do
-      it 'with preserve_exact_body_bytes true' do
-        subject.preserve_exact_body_bytes = true
+      def set_env val
+        ENV['PRESERVE_EXACT_BODY_BYTES'] = val
+      end
+
+      before do
+        ENV.delete('PRESERVE_EXACT_BODY_BYTES')
+      end
+
+      it 'should return false by default' do
+        expect(subject.preserve_exact_body_bytes).to eq false
+      end
+
+      it 'with preserve_exact_body_bytes "(true|t|yes|y|1)" string' do
+        # turn into 'it should behave like'
+
+        set_env 'true'
+        expect(subject.preserve_exact_body_bytes).to eq true
+
+        set_env 't'
+        expect(subject.preserve_exact_body_bytes).to eq true
+
+        set_env 'y'
+        expect(subject.preserve_exact_body_bytes).to eq true
+
+        set_env '1'
         expect(subject.preserve_exact_body_bytes).to eq true
       end
 
-      it 'should have an empty hash of options by default' do
+      it 'with preserve_exact_body_bytes "(false|f|no|n|0)" string' do
+        # turn into 'it should behave like'
+
+        set_env nil
         expect(subject.preserve_exact_body_bytes).to eq false
+
+        set_env ''
+        expect(subject.preserve_exact_body_bytes).to eq false
+
+        set_env 'false'
+        expect(subject.preserve_exact_body_bytes).to eq false
+
+        set_env 'f'
+        expect(subject.preserve_exact_body_bytes).to eq false
+
+        set_env 'n'
+        expect(subject.preserve_exact_body_bytes).to eq false
+
+        set_env '0'
+        expect(subject.preserve_exact_body_bytes).to eq false
+      end
+    end
+
+    context '#ignore_localhost' do
+      def set_env val
+        ENV['SHOULD_RACK_VCR_PROXY_IGNORE_LOCALHOST'] = val
+      end
+
+      before do
+        ENV.delete('SHOULD_RACK_VCR_PROXY_IGNORE_LOCALHOST')
+      end
+
+      it 'should return false by default' do
+        expect(subject.ignore_localhost).to eq false
+      end
+
+      it 'with ignore_localhost "(true|t|yes|y|1)" string' do
+        # turn into 'it should behave like'
+
+        set_env 'true'
+        expect(subject.ignore_localhost).to eq true
+
+        set_env 't'
+        expect(subject.ignore_localhost).to eq true
+
+        set_env 'y'
+        expect(subject.ignore_localhost).to eq true
+
+        set_env '1'
+        expect(subject.ignore_localhost).to eq true
+      end
+
+      it 'with preserve_exact_body_bytes "(false|f|no|n|0)" string' do
+        # turn into 'it should behave like'
+
+        set_env nil
+        expect(subject.ignore_localhost).to eq false
+
+        set_env ''
+        expect(subject.ignore_localhost).to eq false
+
+        set_env 'false'
+        expect(subject.ignore_localhost).to eq false
+
+        set_env 'f'
+        expect(subject.ignore_localhost).to eq false
+
+        set_env 'n'
+        expect(subject.ignore_localhost).to eq false
+
+        set_env 'no'
+        expect(subject.ignore_localhost).to eq false
+
+        set_env '0'
+        expect(subject.ignore_localhost).to eq false
       end
     end
   end

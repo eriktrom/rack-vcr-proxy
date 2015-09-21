@@ -20,6 +20,8 @@ VCR.configure do |c|
     :preserve_exact_body_bytes => proxy_builder.preserve_exact_body_bytes
   }
 
+  c.ignore_localhost = proxy_builder.ignore_localhost
+
   c.before_record do |i|
 
     # pretty print request and response json body's
