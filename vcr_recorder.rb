@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require 'dotenv'
 Dotenv.load
 
@@ -5,6 +6,7 @@ require 'rack'
 require 'vcr'
 require 'rack/reverse_proxy'
 require 'json'
+require 'pry'
 require_relative 'lib/proxy_builder'
 
 proxy_builder = ProxyBuilder.new
@@ -22,52 +24,9 @@ VCR.configure do |c|
 
   c.ignore_localhost = proxy_builder.ignore_localhost
 
-  c.before_record do |i|
-
-    # pretty print request and response json body's
-    type = Array(i.response.headers['Content-Type']).join(',').split(';').first
-    code = i.response.status.code
-
-    if type == ('application/json' || 'text/javascript')
-      # pretty generate request body
-      if i.request.body.length > 0
-        begin
-          if i.request.body.is_a?(String)
-            request_body = JSON.parse i.request.body
-          else
-            request_body = i.request.body
-          end
-        rescue
-          if code != 404
-            puts
-            warn "VCR: JSON REQUEST parse error for Content-type #{type}"
-            warn "Your unparseable REQUEST json is: " + i.request.body.inspect
-            puts
-          end
-        else
-          i.request.body = JSON.pretty_generate request_body
-        end
-      end
-
-      # pretty generate response body
-      begin
-        if i.response.body.is_a?(String)
-          response_body = JSON.parse i.response.body
-        else
-          response_body = i.response.body
-        end
-      rescue
-        if code != 404
-          puts
-          warn "VCR: JSON RESPONSE parse error for Content-type #{type}"
-          warn "Your unparseable RESPONSE json is: " + i.response.body.inspect
-          warn "Your unparseable raw RESPONSE json is: " + i.response.body
-          puts
-        end
-      else
-        i.response.body = JSON.pretty_generate response_body
-      end
-    end
+  c.before_record do |recording|
+    proxy_builder.format recording
+    # recording.response.body.force_encoding('utf-8')
   end
 end
 
@@ -76,7 +35,16 @@ builder = Rack::Builder.new do
   use Rack::ShowExceptions
 
   use VCR::Middleware::Rack do |cassette, env|
-    cassette.name proxy_builder.cassette_name(env)
+    proxy_builder.env = env
+    cassette.options proxy_builder.record_options
+
+    if proxy_builder.is_login_redirect
+      cassette.name proxy_builder.cassette_name('redirect')
+    elsif proxy_builder.is_login_success
+      cassette.name proxy_builder.cassette_name('success')
+    else
+      cassette.name proxy_builder.cassette_name
+    end
   end
 
   use Rack::ReverseProxy do |env|

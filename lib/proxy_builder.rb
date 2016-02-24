@@ -41,9 +41,43 @@ class ProxyBuilder
   # endpoints path + method + query params
   #
   # @see [#query_path] and [#method] for more details on how cassettes are saved.
-  def cassette_name env
-      @env = env
-      "#{path}/#{method}#{query_path}"
+  def cassette_name append_name=false
+
+    if append_name == 'redirect'
+      ENV['VCR_RECORDER_LOGIN_REDIRECT'] = '0'
+    elsif append_name == 'success'
+      ENV['VCR_RECORDER_LOGIN_REDIRECT'] = '1'
+    end
+
+    append_name = ENV['VCR_PROXY_CASSETTE_NAME'] unless append_name
+
+    result = "#{path}/#{method}#{query_path}"
+
+    if append_name && append_name.length > 0
+      "#{result}/#{append_name}"
+    else
+      result
+    end
+  end
+
+  def is_login
+    env.fetch('REQUEST_PATH').downcase.include?('login')
+  end
+
+  def is_login_redirect
+    is_login && ENV['VCR_RECORDER_LOGIN_REDIRECT'] == '1'
+  end
+
+  def is_login_success
+    is_login && ENV['VCR_RECORDER_LOGIN_REDIRECT'] == '0'
+  end
+
+  def is_new_recording_session
+    ENV['VCR_RECORDER_NEW_SESSION'] == '1'
+  end
+
+  def record_options
+    is_new_recording_session ? {:record => :all} : {:record => :once}
   end
 
   # Upstream endpoint to reverse proxy & record req/res cycles to/from
@@ -63,6 +97,12 @@ class ProxyBuilder
     splitter = /(.)/.match(@reverse_proxy_path)[0] == '/' ? '' : '/'
     star_suffix = /(\*)/.match(@reverse_proxy_path).nil? ? '/*' : ''
     "#{splitter}#{@reverse_proxy_path}#{star_suffix}"
+  end
+
+
+
+  def format recording #change var name, lol
+    Formatter.new(recording).format
   end
 
   private
@@ -94,7 +134,7 @@ class ProxyBuilder
     #            > /query
     #              > /type-is-black
     #                > /breed-is-mutt
-    #                  > /name-is-tobi.yml   <-- your cassette file for this request
+    #                  > /name-is-tobrecording.yml   <-- your cassette file for this request
     #
     # @return [String] File directory path to a cassette file
     def query_path
@@ -136,4 +176,69 @@ class ProxyBuilder
     def method
       env.fetch('REQUEST_METHOD')
     end
+
+
+  class Formatter
+
+    attr_reader :recording, :type, :code
+
+    def initialize(recording)
+      @recording = recording
+      @type = Array(recording.response.headers['Content-Type']).join(',').split(';').first
+      @code = recording.response.status.code
+    end
+
+    def format
+      case type
+      when ('application/json' || 'text/javascript') then formatJson
+      else
+        # do nothing, this is optional behavior in the first place
+      end
+    end
+
+    private
+
+      def formatJson
+        # copied from main rack file, obviously this could use some cleanup TODO
+
+        if recording.request.body.length > 0
+          # format request body
+          begin
+            if recording.request.body.is_a?(String)
+              request_body = JSON.parse recording.request.body
+            else
+              request_body = recording.request.body
+            end
+          rescue
+            if code != 404
+              puts
+              warn "VCR: JSON REQUEST parse error for Content-type #{type}"
+              warn "Your unparseable REQUEST json is: " + recording.request.body.inspect
+              puts
+            end
+          else
+            recording.request.body = JSON.pretty_generate request_body
+          end
+
+          # format response body
+          begin
+            if recording.response.body.is_a?(String)
+              response_body = JSON.parse recording.response.body
+            else
+              response_body = recording.response.body
+            end
+          rescue
+            if code != 404
+              puts
+              warn "VCR: JSON RESPONSE parse error for Content-type #{type}"
+              warn "Your unparseable RESPONSE json is: " + recording.response.body.inspect
+              warn "Your unparseable raw RESPONSE json is: " + recording.response.body
+              puts
+            end
+          else
+            recording.response.body = JSON.pretty_generate response_body
+          end
+        end
+      end
+  end
 end
