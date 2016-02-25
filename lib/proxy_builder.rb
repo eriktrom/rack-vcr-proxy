@@ -7,7 +7,8 @@ require 'pry'
 class ProxyBuilder
   attr_accessor :scheme, :host, :port, :path, :query,
                 :cassette_library_dir, :proxy_port, :env,
-                :preserve_exact_body_bytes, :ignore_localhost
+                :preserve_exact_body_bytes, :ignore_localhost,
+                :http_settable_append_name
 
   attr_writer :reverse_proxy_path
 
@@ -19,7 +20,7 @@ class ProxyBuilder
 
   def initialize host: nil,
                  port: ENV['PORT'] || '80',
-                 proxy_port: ENV['PROXY_PORT'] || 9001,
+                 proxy_port: ENV['PROXY_PORT'] || 9001, # TODO: remove me after rack cascade refactor (time permitting, lol)
                  scheme: ENV['SCHEME'] || 'https',
                  cassette_library_dir: ENV['CASSETTES'] || 'cassettes',
                  reverse_proxy_path: ENV['REVERSE_PROXY_PATH'] || '/*',
@@ -49,7 +50,7 @@ class ProxyBuilder
       ENV['VCR_RECORDER_LOGIN_REDIRECT'] = '1'
     end
 
-    append_name = ENV['VCR_PROXY_CASSETTE_NAME'] unless append_name
+    append_name = http_settable_append_name unless append_name
 
     result = "#{path}/#{method}#{query_path}"
 
